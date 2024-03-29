@@ -50,6 +50,7 @@ functions:
     memorySize: 128
     environment:
       QUEUE_URL: https://sqs.${self:provider.region}.amazonaws.com/${aws:accountId}/${self:custom.UPLOADS_PROCESSING_QUEUE_NAME}
+      REGION: ${self:provider.region}
     events:
       - httpApi:
           path: /producer
