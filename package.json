@@ -1,0 +1,17 @@
+{
+  "name": "aws-node-sqs-worker",
+  "version": "1.0.0",
+  "author": "mpgxc",
+  "license": "MIT",
+  "dependencies": {
+    "@aws-sdk/client-sqs": "^3.540.0"
+  },
+  "scripts": {
+    "dev": "nodemon --exec npx sls offline --host 0.0.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.12",
+    "serverless-deployment-bucket": "^1.6.0",
+    "serverless-offline": "^13.3.3"
+  }
+}

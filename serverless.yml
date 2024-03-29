@@ -1,0 +1,68 @@
+service: aws-node-sqs-worker
+frameworkVersion: "3.38"
+
+plugins:
+  - serverless-offline
+  - serverless-deployment-bucket
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: us-east-1
+  stage: hml
+  deploymentBucket:
+    name: ${self:service}-${self:provider.region}-deployment-lambdas
+    blockPublicAccess: true
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - "sqs:SendMessage"
+          Resource:
+            - "Fn::GetAtt":
+                - UploadsProcessingQueue
+                - Arn
+
+custom:
+  UPLOADS_PROCESSING_QUEUE_NAME: ${opt:stage, self:provider.stage}-uploads-processing-queue
+
+resources:
+  Resources:
+    UploadsProcessingQueue:
+      Type: "AWS::SQS::Queue"
+      Properties:
+        QueueName: ${self:custom.UPLOADS_PROCESSING_QUEUE_NAME}
+        RedrivePolicy:
+          deadLetterTargetArn:
+            "Fn::GetAtt":
+              - UploadsProcessingQueueDql
+              - Arn
+          maxReceiveCount: 5
+    UploadsProcessingQueueDql:
+      Type: "AWS::SQS::Queue"
+      Properties:
+        QueueName: ${self:custom.UPLOADS_PROCESSING_QUEUE_NAME}-dlq
+
+functions:
+  producer:
+    handler: handlers.producer
+    memorySize: 128
+    environment:
+      QUEUE_URL: https://sqs.${self:provider.region}.amazonaws.com/${aws:accountId}/${self:custom.UPLOADS_PROCESSING_QUEUE_NAME}
+    events:
+      - httpApi:
+          path: /producer
+          method: get
+
+  consumer:
+    handler: handlers.consumer
+    memorySize: 128
+    events:
+      - sqs:
+          batchSize: 10
+          maximumBatchingWindow: 60
+          arn:
+            "Fn::GetAtt":
+              - UploadsProcessingQueue
+              - Arn
