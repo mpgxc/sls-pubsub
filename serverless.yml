@@ -62,7 +62,7 @@ functions:
     events:
       - sqs:
           batchSize: 10
-          maximumBatchingWindow: 60
+          maximumBatchingWindow: 120
           arn:
             "Fn::GetAtt":
               - UploadsProcessingQueue
